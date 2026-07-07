@@ -177,44 +177,49 @@ impl SpatialListeners<'_, '_> {
     /// Fetch the nearest spatial listener, if any exist.
     ///
     /// This iterates over both 2D and 3D listeners.
-    fn nearest_listener(&self, emitter: Vec3) -> Option<(Transform, SpatialKind)> {
+    fn nearest_listener(&self, emitter: Vec3) -> Option<(Vec3, Quat, SpatialKind)> {
         // This is linear over the number of listeners, but we
         // expect there to be very few of these at any one time.
         self.listeners
             .iter()
             .map(|(transform, kind)| {
                 let transform = transform.compute_transform();
+                let (t, r) = (transform.translation, transform.rotation);
+                // Scalar casts compile against both plain-f32 bevy and
+                // `transform_f64` forks — audio math stays f32 either way.
+                #[allow(trivial_numeric_casts)]
+                let translation = Vec3::new(t.x as f32, t.y as f32, t.z as f32);
+                #[allow(trivial_numeric_casts)]
+                let rotation = Quat::from_xyzw(r.x as f32, r.y as f32, r.z as f32, r.w as f32);
                 let kind = SpatialKind::from(kind);
                 let distance = match kind {
                     // in a 2d context, we need to ignore the z component
-                    SpatialKind::Listener2D => {
-                        emitter.xy().distance_squared(transform.translation.xy())
-                    }
-                    SpatialKind::Listener3D => emitter.distance_squared(transform.translation),
+                    SpatialKind::Listener2D => emitter.xy().distance_squared(translation.xy()),
+                    SpatialKind::Listener3D => emitter.distance_squared(translation),
                 };
 
-                (transform, kind, distance)
+                (translation, rotation, kind, distance)
             })
             .min_by(|(.., a), (.., b)| a.total_cmp(b))
-            .map(|(transform, kind, ..)| (transform, kind))
+            .map(|(translation, rotation, kind, ..)| (translation, rotation, kind))
     }
 
     /// Calculate the offset between `emitter` and the nearest listener.
     ///
     /// This does not account for spatial scaling.
     fn calculate_offset(&self, emitter: Vec3) -> Option<Vec3> {
-        let (listener, kind) = self.nearest_listener(emitter)?;
+        let (translation, rotation, kind) = self.nearest_listener(emitter)?;
 
-        let mut world_offset = emitter - listener.translation;
+        let mut world_offset = emitter - translation;
 
         match kind {
             SpatialKind::Listener2D => {
                 world_offset.z = 0.0;
-                let local_offset = listener.rotation.inverse() * world_offset;
+                let local_offset = rotation.inverse() * world_offset;
                 Some(Vec3::new(local_offset.x, 0.0, local_offset.y))
             }
             SpatialKind::Listener3D => {
-                let local_offset = listener.rotation.inverse() * world_offset;
+                let local_offset = rotation.inverse() * world_offset;
                 Some(local_offset)
             }
         }
@@ -227,10 +232,16 @@ fn extract_effect_transform(
     effect_transform: <EffectTransform as QueryData>::Item<'_, '_>,
     transforms: &Query<&GlobalTransform>,
 ) -> Option<Vec3> {
+    // Scalar casts compile against both plain-f32 bevy and `transform_f64` forks.
+    #[allow(trivial_numeric_casts)]
+    fn translation_f32(global: &GlobalTransform) -> Vec3 {
+        let t = global.translation();
+        Vec3::new(t.x as f32, t.y as f32, t.z as f32)
+    }
     match effect_transform {
-        (Some(global), _) => Some(global.translation()),
+        (Some(global), _) => Some(translation_f32(global)),
         (_, Some(parent)) => match transforms.get(parent.0) {
-            Ok(global) => Some(global.translation()),
+            Ok(global) => Some(translation_f32(global)),
             Err(_) => None,
         },
         _ => unreachable!(),
