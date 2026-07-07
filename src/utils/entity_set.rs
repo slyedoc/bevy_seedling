@@ -148,10 +148,11 @@ mod reflect {
     impl bevy_reflect::GetTypeRegistration for OrderedEntitySet {
         fn get_type_registration() -> bevy_reflect::TypeRegistration {
             let mut registration = bevy_reflect::TypeRegistration::of::<Self>();
-            registration
-            .insert::<bevy_reflect::ReflectFromPtr>(bevy_reflect::FromType::<Self>::from_type());
+            registration.insert::<bevy_reflect::ReflectFromPtr>(
+                <bevy_reflect::ReflectFromPtr as bevy_reflect::CreateTypeData<Self>>::create_type_data(()),
+            );
             registration.insert::<bevy_reflect::ReflectFromReflect>(
-                bevy_reflect::FromType::<Self>::from_type(),
+                <bevy_reflect::ReflectFromReflect as bevy_reflect::CreateTypeData<Self>>::create_type_data(()),
             );
             registration
         }
