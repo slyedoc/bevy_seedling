@@ -326,6 +326,7 @@ where
 
         self.iter_many_unique(effects.iter())
             .next()
+            .and_then(Result::ok)
             .ok_or(EffectsQueryError::MatchedNone)
     }
 
@@ -339,6 +340,7 @@ where
 
         self.iter_many_unique_mut(effects.iter())
             .next()
+            .and_then(Result::ok)
             .ok_or(EffectsQueryError::MatchedNone)
     }
 
