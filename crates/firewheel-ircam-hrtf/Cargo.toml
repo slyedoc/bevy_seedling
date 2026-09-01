@@ -35,10 +35,10 @@ all-features = true
 
 [dependencies]
 firewheel = { git = "https://github.com/slyedoc/Firewheel", branch = "aurora", default-features = false, features = [
-  "glam-32",
+  "glam-33",
   "std",
 ] }
-glam = { version = "0.32", default-features = false, features = ["std"] }
+glam = { version = "0.33", default-features = false, features = ["std"] }
 hrtf = "0.8.1"
 
 # Bevy dependencies

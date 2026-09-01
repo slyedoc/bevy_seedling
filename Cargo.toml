@@ -75,7 +75,7 @@ firewheel = { git = "https://github.com/slyedoc/Firewheel", branch = "aurora", d
   "spatial_basic_node",
   "scheduled_events",
   "musical_transport",
-  "glam-32",
+  "glam-33",
   "sampler_node",
   "std",
   "tracing",
