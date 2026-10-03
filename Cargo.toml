@@ -52,7 +52,6 @@ profiling = ["dep:audioadapter-buffers"]
 bevy_ecs = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
 bevy_app = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
 bevy_math = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false, features = [
-  "curve",
   "std",
 ] }
 bevy_asset = { git = "https://github.com/bevyengine/bevy", branch = "main", default-features = false }
